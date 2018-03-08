@@ -4,7 +4,8 @@ COVERPROFILE=
 DEBUG=
 ARGS=
 
-all: fmt test
+build: fmt vet test
+	go build -o cup
 
 fmt:
 	go fmt ./...
@@ -12,11 +13,8 @@ fmt:
 vet:
 	go vet -v .
 
-build: fmt vet test
-	go build -o yakv
-
 clean:
-	rm -f yakv
+	rm -f cup
 
 test:
 	go test -cover $(COVERPROFILE) -race $(DEBUG) $(ARGS) ./...
