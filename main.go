@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"os"
+	"os/exec"
 	"syscall"
 
 	"github.com/docker/docker/pkg/reexec"
@@ -25,6 +26,15 @@ func childProcess() {
 	}
 	if h, err := os.Hostname(); err == nil {
 		log.Printf("child: hostname: %s\n", h)
+	}
+
+	cmd := exec.Command("/bin/bash")
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	if err := cmd.Run(); err != nil {
+		log.Panicf("failed to run bash: %s", err)
 	}
 }
 
