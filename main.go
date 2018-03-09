@@ -28,13 +28,30 @@ func childProcess() {
 		log.Printf("child: hostname: %s\n", h)
 	}
 
-	cmd := exec.Command("/bin/bash")
+	if err := syscall.Chroot("./rootfs"); err != nil {
+		log.Panicf("failed to chroot: %s", err)
+	}
+	if err := syscall.Chdir("/"); err != nil {
+		log.Panicf("failed to chdir: %s", err)
+	}
+
+	if err := os.RemoveAll("proc"); err != nil {
+		log.Panicf("failed to remove rootfs/proc: %s", err)
+	}
+	if err := os.Mkdir("proc", 0755); err != nil {
+		log.Panicf("failed to mkdir rootfs/proc: %s", err)
+	}
+	if err := syscall.Mount("/proc", "/proc", "proc", 0, ""); err != nil {
+		log.Panicf("failed to mount: %s", err)
+	}
+
+	cmd := exec.Command("/bin/busybox", "sh")
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 
 	if err := cmd.Run(); err != nil {
-		log.Panicf("failed to run bash: %s", err)
+		log.Panicf("failed to run command: %s", err)
 	}
 }
 
@@ -46,6 +63,7 @@ func main() {
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 
+	cmd.Env = []string{}
 	cmd.SysProcAttr = &syscall.SysProcAttr{
 		Cloneflags: syscall.CLONE_NEWNS | syscall.CLONE_NEWIPC | syscall.CLONE_NEWNET | syscall.CLONE_NEWPID | syscall.CLONE_NEWUTS | syscall.CLONE_NEWUSER,
 		UidMappings: []syscall.SysProcIDMap{
